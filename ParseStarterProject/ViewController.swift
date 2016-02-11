@@ -10,6 +10,7 @@
 import UIKit
 import Parse
 
+@available(iOS 8.0, *)
 class ViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     
     func imagePickerController(picker: UIImagePickerController, didFinishPickingImage image: UIImage, editingInfo: [String : AnyObject]?) {
@@ -38,19 +39,27 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
     @IBOutlet weak var password: UITextField!
     
     var activityIndicator: UIActivityIndicatorView = UIActivityIndicatorView()
-    
+
+    func displayAlert(title: String, message: String) {
+        
+        var alert = UIAlertController(title: title, message: message, preferredStyle: UIAlertControllerStyle.Alert)
+        alert.addAction((UIAlertAction(title: "OK", style: .Default, handler: { (action) ->Void in
+                
+                self.dismissViewControllerAnimated(true, completion: nil)
+                
+            })))
+
+        self.presentViewController(alert, animated: true, completion: nil)
+        
+    }
     
     @available(iOS 8.0, *)
     @IBAction func signUp(sender: AnyObject) {
         
         if username.text == "" || password.text == "" {
-            var alert = UIAlertController(title: "Error", message: "Please enter a username and password", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction((UIAlertAction(title: "OK", style: .Default, handler: { (action) ->Void in
-                
-                self.dismissViewControllerAnimated(true, completion: nil)
-                
-                })))
-            self.presentViewController(alert, animated: true, completion: nil)
+            
+            displayAlert("Error", message: "Please enter a username and password")
+            
         } else {
             
             activityIndicator = UIActivityIndicatorView(frame: CGRectMake(0, 0, 50, 50))
@@ -65,7 +74,9 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
             user.username = username.text
             user.password = password.text
             
-            user.signUpInBackgroundWithBlock({ (success, error) -> Void in
+            var errorMessage = "Please try again later"
+            
+            user.signUpInBackgroundWithBlock({ (success, var error) -> Void in
                 
                 self.activityIndicator.stopAnimating()
                 UIApplication.sharedApplication().endIgnoringInteractionEvents()
@@ -73,9 +84,12 @@ class ViewController: UIViewController, UINavigationControllerDelegate, UIImageP
                 if error == nil {
                     //signup successful
                 } else {
-                    if let errorString = error.userInfo?["error"] as? NSString {
+                    if let errorString = error!.userInfo["error"] as? String {
                         
+                        errorMessage = errorString
                     }
+                    
+                    self.displayAlert("Failed SignUp", message: errorMessage)
                 }
                 
             })
